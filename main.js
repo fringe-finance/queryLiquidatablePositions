@@ -1,5 +1,16 @@
 const LiquidatePositions = require('@fringefinance/primary-scripts');
 const Web3 = require('web3');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Get the directory path of the current script
+const scriptDir = path.dirname(__filename);
+
+// Construct the path to the .env file relative to the script's directory
+const envFilePath = path.join(scriptDir, '.env');
+
+// Load environment variables from the .env file
+dotenv.config({ path: envFilePath });
 
 async function normalizeUrl(baseUrl, ...segments) {
     // Ensure the base URL ends with a single slash
@@ -11,6 +22,8 @@ async function normalizeUrl(baseUrl, ...segments) {
 }
 
 async function makeOutputReadable(result, chainName, minValue) {
+    let countOfPositions = 0;
+    let sumOfLendingTokenValue = 0; // purpose of this is to act as a hash and also to provide high level overview
     let readableResult = [];
     let promises = [];
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
@@ -78,6 +91,8 @@ async function makeOutputReadable(result, chainName, minValue) {
                 };
                 let executionData = { borrowerAddressList, collateralTokenAddressList, lendingTokenAddressList, minRepaymentTokenCount, maxRepaymentTokenCount, fContractAddressList, plpAddressList, liquidationContractAddressList };
                 if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
+                    sumOfLendingTokenValue += lendingValueUSD
+                    countOfPositions += 1;
                     readableResult.push({ evaluationData, executionData });
                 }
             })
@@ -91,7 +106,7 @@ async function makeOutputReadable(result, chainName, minValue) {
         const absB = Math.abs(b.evaluationData.liquidatorPnlUSD);
         return absB - absA; // Sort by largest absolute value first
     });
-    return readableResult;
+    return readableResult, sumOfLendingTokenValue, countOfPositions;
 }
 
 async function getTokenSymbol(tokenAddress, rpcUrl) {
@@ -229,8 +244,9 @@ async function liquidateForChain(chainName, minValue) {
     // Execute the liquidation process for the chain
     console.log(`\n\n\nChain: ${chainName}  ` + rpcUrl);
     const result = await liquidatePosition.getLiquidatePositions();
-    readableResult = await makeOutputReadable(result, chainName, minValue);
+    readableResult, sumOfLendingTokenValue, countOfPositions = await makeOutputReadable(result, chainName, minValue);
     console.log(JSON.stringify(readableResult, null, 2)); // The '2' here specifies the number of spaces used for indentation
+    console.log("total lending value: US$", sumOfLendingTokenValue, "positions count: ", countOfPositions);
 }
 
 async function processChains(chains, minValue) {
