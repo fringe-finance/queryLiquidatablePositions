@@ -24,6 +24,8 @@ async function normalizeUrl(baseUrl, ...segments) {
 async function makeOutputReadable(result, chainName, minValue) {
     let countOfPositions = 0;
     let sumOfLendingTokenValue = 0; // purpose of this is to act as a hash and also to provide high level overview
+    let totalLiquidatorLosses = 0;
+    let totalLiquidatorProfits = 0;
     let readableResult = [];
     let promises = [];
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
@@ -93,6 +95,8 @@ async function makeOutputReadable(result, chainName, minValue) {
                 if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
                     sumOfLendingTokenValue += lendingValueUSD
                     countOfPositions += 1;
+                    totalLiquidatorLosses += Math.max(0, liquidatorPnlUSD);
+                    totalLiquidatorProfits += Math.min(0, liquidatorPnlUSD);
                     readableResult.push({ evaluationData, executionData });
                 }
             })
@@ -106,7 +110,7 @@ async function makeOutputReadable(result, chainName, minValue) {
         const absB = Math.abs(b.evaluationData.liquidatorPnlUSD);
         return absB - absA; // Sort by largest absolute value first
     });
-    return readableResult, sumOfLendingTokenValue, countOfPositions;
+    return [readableResult, sumOfLendingTokenValue, countOfPositions, totalLiquidatorLosses, totalLiquidatorProfits];
 }
 
 async function getTokenSymbol(tokenAddress, rpcUrl) {
@@ -244,15 +248,24 @@ async function liquidateForChain(chainName, minValue) {
     // Execute the liquidation process for the chain
     console.log(`\n\n\nChain: ${chainName}  ` + rpcUrl);
     const result = await liquidatePosition.getLiquidatePositions();
-    readableResult, sumOfLendingTokenValue, countOfPositions = await makeOutputReadable(result, chainName, minValue);
+    let [readableResult, sumOfLendingTokenValue, countOfPositions, totalLiquidatorLosses, totalLiquidatorProfits] = await makeOutputReadable(result, chainName, minValue);
     console.log(JSON.stringify(readableResult, null, 2)); // The '2' here specifies the number of spaces used for indentation
-    console.log("total lending value: US$", sumOfLendingTokenValue, "positions count: ", countOfPositions);
+    return [sumOfLendingTokenValue, countOfPositions, totalLiquidatorLosses, totalLiquidatorProfits];
 }
 
 async function processChains(chains, minValue) {
+    let sumOfLendingTokenValue = 0;
+    let countOfPositions = 0;
+    let totalLiquidatorLosses = 0;
+    let totalLiquidatorProfits = 0;
     for (const chain of chains) {
-        await liquidateForChain(chain, minValue).catch(console.error);
+        let [chainSumOfLendingTokenValue, chainCountOfPositions, chainTotalLiquidatorLosses, chainTotalLiquidatorProfits] = await liquidateForChain(chain, minValue).catch(console.error);
+        sumOfLendingTokenValue += chainSumOfLendingTokenValue;
+        countOfPositions += chainCountOfPositions;
+        totalLiquidatorLosses += chainTotalLiquidatorLosses;
+        totalLiquidatorProfits += chainTotalLiquidatorProfits;
     }
+    console.log("\n\n\n\ntotal lending value: US$", sumOfLendingTokenValue, "\nposition count:", countOfPositions, "\ntotal liquidator losses: US$", totalLiquidatorLosses, "\ntotal liquidator profits: US$", totalLiquidatorProfits);
 }
 
 const yargs = require('yargs');
