@@ -10,7 +10,7 @@ async function normalizeUrl(baseUrl, ...segments) {
     return new URL(normalizedSegments.join('/'), normalizedBaseUrl).href;
 }
 
-async function makeOutputReadable(result, chainName) {
+async function makeOutputReadable(result, chainName, minValue) {
     let readableResult = [];
     let promises = [];
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
@@ -77,8 +77,9 @@ async function makeOutputReadable(result, chainName) {
                     liquidatorPnlUSD, collateralSymbol, collateralPriceUSD, lendingSymbol, lendingPriceUSD, collateralValueUSD, lendingValueUSD, liquidatorRewardFactor, healthFactor, maxRepaymentValueUSD
                 };
                 let executionData = { borrowerAddressList, collateralTokenAddressList, lendingTokenAddressList, minRepaymentTokenCount, maxRepaymentTokenCount, fContractAddressList, plpAddressList, liquidationContractAddressList };
-
-                readableResult.push({ evaluationData, executionData });
+                if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
+                    readableResult.push({ evaluationData, executionData });
+                }
             })
         );
     }
@@ -210,14 +211,9 @@ async function getTokenDecimals(tokenAddress, rpcUrl) {
     }
 }
 
-// Retrieve all chain names provided as command line arguments
-const chains = process.argv.slice(2);
-if (chains.length === 0) {
-    chains = ['ZKSYNC', 'OPTIMISM', 'ARBITRUM', 'ETHEREUM', 'POLYGON'];
-}
 
 // Define an async function to liquidate positions for a given chain
-async function liquidateForChain(chainName) {
+async function liquidateForChain(chainName, minValue) {
     // Use environment variables specific to the chain
     rpcUrl = process.env[`${chainName.toUpperCase()}_NETWORK_RPC`];
     plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
@@ -233,14 +229,34 @@ async function liquidateForChain(chainName) {
     // Execute the liquidation process for the chain
     console.log(`\n\n\nChain: ${chainName}  ` + rpcUrl);
     const result = await liquidatePosition.getLiquidatePositions();
-    readableResult = await makeOutputReadable(result, chainName);
+    readableResult = await makeOutputReadable(result, chainName, minValue);
     console.log(JSON.stringify(readableResult, null, 2)); // The '2' here specifies the number of spaces used for indentation
 }
 
-async function processChains(chains) {
+async function processChains(chains, minValue) {
     for (const chain of chains) {
-        await liquidateForChain(chain).catch(console.error);
+        await liquidateForChain(chain, minValue).catch(console.error);
     }
 }
 
-processChains(chains).catch(console.error); 
+const yargs = require('yargs');
+
+const argv = yargs
+    .usage('Usage: $0 [options] [chains...]')
+    .option('minValue', {
+        alias: 'm',
+        describe: 'Minimum value for processing chains',
+        type: 'number',
+        default: 0,
+    })
+    .help('h')
+    .alias('h', 'help')
+    .example('$0 --minValue 100 ZKSYNC OPTIMISM', 'Process ZKSYNC and OPTIMISM chains with a minimum value of 100')
+    .example('$0 ZKSYNC OPTIMISM', 'Process ZKSYNC and OPTIMISM chains with the default minimum value')
+    .demandCommand(1, 'Please specify at least one chain or use the default chains')
+    .argv;
+
+const chains = argv._;
+
+
+processChains(chains, argv.minValue).catch(console.error);

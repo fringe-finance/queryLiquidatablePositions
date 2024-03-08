@@ -1,5 +1,6 @@
 {
     "dependencies": {
-        "@fringefinance/primary-scripts": "^1.0.7"
+        "@fringefinance/primary-scripts": "^1.0.7",
+        "yargs": "^17.7.2"
     }
 }
