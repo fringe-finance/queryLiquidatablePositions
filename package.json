@@ -1,0 +1,5 @@
+{
+    "dependencies": {
+        "@fringefinance/primary-scripts": "^1.0.7"
+    }
+}
