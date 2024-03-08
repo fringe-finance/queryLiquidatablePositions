@@ -95,8 +95,8 @@ async function makeOutputReadable(result, chainName, minValue) {
                 if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
                     sumOfLendingTokenValue += lendingValueUSD
                     countOfPositions += 1;
-                    totalLiquidatorLosses += Math.max(0, liquidatorPnlUSD);
-                    totalLiquidatorProfits += Math.min(0, liquidatorPnlUSD);
+                    totalLiquidatorLosses += Math.min(0, liquidatorPnlUSD);
+                    totalLiquidatorProfits += Math.max(0, liquidatorPnlUSD);
                     readableResult.push({ evaluationData, executionData });
                 }
             })
@@ -265,7 +265,7 @@ async function processChains(chains, minValue) {
         totalLiquidatorLosses += chainTotalLiquidatorLosses;
         totalLiquidatorProfits += chainTotalLiquidatorProfits;
     }
-    console.log("\n\n\n\ntotal lending value: US$", sumOfLendingTokenValue, "\nposition count:", countOfPositions, "\ntotal liquidator losses: US$", totalLiquidatorLosses, "\ntotal liquidator profits: US$", totalLiquidatorProfits);
+    console.log("\n\n\n\ntotal lending value: US$", Math.round(sumOfLendingTokenValue), "\nposition count:", countOfPositions, "\ntotal unrealized liquidator losses: US$", totalLiquidatorLosses, "\ntotal unrealized liquidator profits: US$", totalLiquidatorProfits);
 }
 
 const yargs = require('yargs');
