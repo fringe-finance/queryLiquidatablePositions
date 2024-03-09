@@ -2,6 +2,7 @@ const LiquidatePositions = require('@fringefinance/primary-scripts');
 const Web3 = require('web3');
 const path = require('path');
 const dotenv = require('dotenv');
+const yargs = require('yargs');
 
 // Get the directory path of the current script
 const scriptDir = path.dirname(__filename);
@@ -246,29 +247,35 @@ async function liquidateForChain(chainName, minValue) {
     const liquidatePosition = new LiquidatePositions(rpcUrl, plpAddress, liquidationContractAddress, subgraphUrl, priceAggregatorAddress, pythPriceProviderAddress, timeBeforeExpiration, pythnetPriceFeedEndpoint);
 
     // Execute the liquidation process for the chain
-    console.log(`\n\n\nChain: ${chainName}  ` + rpcUrl);
     const result = await liquidatePosition.getLiquidatePositions();
     let [readableResult, sumOfLendingTokenValue, countOfPositions, totalLiquidatorLosses, totalLiquidatorProfits] = await makeOutputReadable(result, chainName, minValue);
+    console.log(`\n\n\nChain: ${chainName}  ` + rpcUrl);
     console.log(JSON.stringify(readableResult, null, 2)); // The '2' here specifies the number of spaces used for indentation
     return [sumOfLendingTokenValue, countOfPositions, totalLiquidatorLosses, totalLiquidatorProfits];
 }
 
 async function processChains(chains, minValue) {
-    let sumOfLendingTokenValue = 0;
-    let countOfPositions = 0;
-    let totalLiquidatorLosses = 0;
-    let totalLiquidatorProfits = 0;
-    for (const chain of chains) {
-        let [chainSumOfLendingTokenValue, chainCountOfPositions, chainTotalLiquidatorLosses, chainTotalLiquidatorProfits] = await liquidateForChain(chain, minValue).catch(console.error);
-        sumOfLendingTokenValue += chainSumOfLendingTokenValue;
-        countOfPositions += chainCountOfPositions;
-        totalLiquidatorLosses += chainTotalLiquidatorLosses;
-        totalLiquidatorProfits += chainTotalLiquidatorProfits;
-    }
-    console.log("\n\n\n\ntotal lending value: US$", Math.round(sumOfLendingTokenValue), "\nposition count:", countOfPositions, "\ntotal unrealized liquidator losses: US$", totalLiquidatorLosses, "\ntotal unrealized liquidator profits: US$", totalLiquidatorProfits);
+    const promises = chains.map(chain => liquidateForChain(chain, minValue).catch(console.error));
+
+    const results = await Promise.all(promises);
+
+    const sumOfLendingTokenValue = results.reduce((sum, result) => sum + result[0], 0);
+    const countOfPositions = results.reduce((count, result) => count + result[1], 0);
+    const totalLiquidatorLosses = results.reduce((sum, result) => sum + result[2], 0);
+    const totalLiquidatorProfits = results.reduce((sum, result) => sum + result[3], 0);
+
+    console.log(
+        "\n\n\n\ntotal lending value: US$",
+        Math.round(sumOfLendingTokenValue),
+        "\nposition count:",
+        countOfPositions,
+        "\ntotal unrealized liquidator losses: US$",
+        totalLiquidatorLosses,
+        "\ntotal unrealized liquidator profits: US$",
+        totalLiquidatorProfits
+    );
 }
 
-const yargs = require('yargs');
 
 const argv = yargs
     .usage('Usage: $0 [options] [chains...]')
