@@ -235,14 +235,14 @@ async function getTokenDecimals(tokenAddress, rpcUrl) {
 // Define an async function to liquidate positions for a given chain
 async function liquidateForChain(chainName, minValue) {
     // Use environment variables specific to the chain
-    rpcUrl = process.env[`${chainName.toUpperCase()}_NETWORK_RPC`];
-    plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
-    liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
-    subgraphUrl = process.env[`${chainName.toUpperCase()}_PLP_SUBGRAPH_URL`];
-    priceAggregatorAddress = process.env[`${chainName.toUpperCase()}_PRICE_AGGREGATOR_CONTRACT_ADDRESS`];
-    pythPriceProviderAddress = process.env[`${chainName.toUpperCase()}_PYTH_PRICE_PROVIDER_CONTRACT_ADDRESS`];
-    timeBeforeExpiration = process.env[`${chainName.toUpperCase()}_TIME_BEFORE_EXPIRATION`];
-    pythnetPriceFeedEndpoint = process.env[`${chainName.toUpperCase()}_PYTHNET_PRICE_FEED_ENDPOINT`];
+    let rpcUrl = process.env[`${chainName.toUpperCase()}_NETWORK_RPC`];
+    let plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
+    let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
+    let subgraphUrl = process.env[`${chainName.toUpperCase()}_PLP_SUBGRAPH_URL`];
+    let priceAggregatorAddress = process.env[`${chainName.toUpperCase()}_PRICE_AGGREGATOR_CONTRACT_ADDRESS`];
+    let pythPriceProviderAddress = process.env[`${chainName.toUpperCase()}_PYTH_PRICE_PROVIDER_CONTRACT_ADDRESS`];
+    let timeBeforeExpiration = process.env[`${chainName.toUpperCase()}_TIME_BEFORE_EXPIRATION`];
+    let pythnetPriceFeedEndpoint = process.env[`${chainName.toUpperCase()}_PYTHNET_PRICE_FEED_ENDPOINT`];
 
     const liquidatePosition = new LiquidatePositions(rpcUrl, plpAddress, liquidationContractAddress, subgraphUrl, priceAggregatorAddress, pythPriceProviderAddress, timeBeforeExpiration, pythnetPriceFeedEndpoint);
 
