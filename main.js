@@ -35,72 +35,72 @@ async function makeOutputReadable(result, chainName, minValue) {
     for (let liquidatablePositionKey in result.liquidatablePositions) {
         let liquidatablePosition = Object.values(result.liquidatablePositions[liquidatablePositionKey]);
         console.log(`liquidatablePosition: ${liquidatablePosition}`);
-        // let [borrowerAddress, collateralTokenAddress, collateralTokenValue, collateralTokenCount, lendingTokenAddress, lendingTokenOutstandingCount, lendingTokenOutstandingValue, healthFactor, minRepaymentTokenCount, maxRepaymentTokenCount, liquidatorRewardFactor, chainId] = liquidatablePosition;
+        let [borrowerAddress, collateralTokenAddress, collateralTokenValue, collateralTokenCount, lendingTokenAddress, lendingTokenOutstandingCount, lendingTokenOutstandingValue, healthFactor, minRepaymentTokenCount, maxRepaymentTokenCount, liquidatorRewardFactor, chainId] = liquidatablePosition;
 
-        // let collateralDecimalsPromise = getTokenDecimals(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        // let lendingDecimalsPromise = getTokenDecimals(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        // let collateralSymbolPromise = getTokenSymbol(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        // let lendingSymbolPromise = getTokenSymbol(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        // let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let collateralDecimalsPromise = getTokenDecimals(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingDecimalsPromise = getTokenDecimals(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let collateralSymbolPromise = getTokenSymbol(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingSymbolPromise = getTokenSymbol(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
 
-        // // Collect all promises for concurrent execution
-        // promises.push(
-        //     Promise.all([collateralDecimalsPromise, lendingDecimalsPromise, collateralSymbolPromise, lendingSymbolPromise, fContractAddressPromise]).then(async values => {
-        //         let [collateralDecimals, lendingDecimals, collateralSymbol, lendingSymbol, fContractAddress] = values;
+        // Collect all promises for concurrent execution
+        promises.push(
+            Promise.all([collateralDecimalsPromise, lendingDecimalsPromise, collateralSymbolPromise, lendingSymbolPromise, fContractAddressPromise]).then(async values => {
+                let [collateralDecimals, lendingDecimals, collateralSymbol, lendingSymbol, fContractAddress] = values;
 
-        //         collateralTokenCount /= 10 ** collateralDecimals;
-        //         lendingTokenOutstandingCount /= 10 ** lendingDecimals;
-        //         collateralTokenValue /= 10 ** 6;
-        //         lendingTokenOutstandingValue /= 10 ** 6;
-        //         let collateralPriceUSD = collateralTokenValue / collateralTokenCount;
-        //         let lendingPriceUSD = lendingTokenOutstandingValue / lendingTokenOutstandingCount;
-        //         minRepaymentTokenCount /= 10 ** lendingDecimals;
-        //         maxRepaymentTokenCount /= 10 ** lendingDecimals;
-        //         let maxRepaymentValue = maxRepaymentTokenCount * lendingPriceUSD;
-        //         let collateralValueUSD = Math.round(collateralTokenValue * 100) / 100;
-        //         let lendingValueUSD = Math.round(lendingTokenOutstandingValue * 100) / 100;
-        //         collateralPriceUSD = Math.round(collateralPriceUSD * 100) / 100;
-        //         lendingPriceUSD = Math.round(lendingPriceUSD * 100) / 100;
-        //         let maxRepaymentValueUSD = Math.round(maxRepaymentValue * 100) / 100;
-        //         liquidatorRewardFactor = Math.round(liquidatorRewardFactor * 100) / 100;
-        //         healthFactor = Math.round(healthFactor * 100) / 100;
-        //         // join explorer url + "/address/" to to borrower address using url library
-        //         let borrowerAddressUrl = await normalizeUrl(explorerUrl, "/address/", borrowerAddress);
-        //         let liquidationContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", liquidationContractAddress);
-        //         let plpAddressUrl = await normalizeUrl(explorerUrl, "/address/", plpAddress);
-        //         let fContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", fContractAddress);
-        //         let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingTokenAddress);
-        //         let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralTokenAddress);
+                collateralTokenCount /= 10 ** collateralDecimals;
+                lendingTokenOutstandingCount /= 10 ** lendingDecimals;
+                collateralTokenValue /= 10 ** 6;
+                lendingTokenOutstandingValue /= 10 ** 6;
+                let collateralPriceUSD = collateralTokenValue / collateralTokenCount;
+                let lendingPriceUSD = lendingTokenOutstandingValue / lendingTokenOutstandingCount;
+                minRepaymentTokenCount /= 10 ** lendingDecimals;
+                maxRepaymentTokenCount /= 10 ** lendingDecimals;
+                let maxRepaymentValue = maxRepaymentTokenCount * lendingPriceUSD;
+                let collateralValueUSD = Math.round(collateralTokenValue * 100) / 100;
+                let lendingValueUSD = Math.round(lendingTokenOutstandingValue * 100) / 100;
+                collateralPriceUSD = Math.round(collateralPriceUSD * 100) / 100;
+                lendingPriceUSD = Math.round(lendingPriceUSD * 100) / 100;
+                let maxRepaymentValueUSD = Math.round(maxRepaymentValue * 100) / 100;
+                liquidatorRewardFactor = Math.round(liquidatorRewardFactor * 100) / 100;
+                healthFactor = Math.round(healthFactor * 100) / 100;
+                // join explorer url + "/address/" to to borrower address using url library
+                let borrowerAddressUrl = await normalizeUrl(explorerUrl, "/address/", borrowerAddress);
+                let liquidationContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", liquidationContractAddress);
+                let plpAddressUrl = await normalizeUrl(explorerUrl, "/address/", plpAddress);
+                let fContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", fContractAddress);
+                let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingTokenAddress);
+                let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralTokenAddress);
 
-        //         let borrowerAddressList = [borrowerAddressUrl, borrowerAddress]
-        //         let liquidationContractAddressList = [liquidationContractAddressUrl, liquidationContractAddress]
-        //         let plpAddressList = [plpAddressUrl, plpAddress]
-        //         let fContractAddressList = [fContractAddressUrl, fContractAddress]
-        //         let lendingTokenAddressList = [lendingTokenAddressUrl, lendingTokenAddress]
-        //         let collateralTokenAddressList = [collateralTokenAddressUrl, collateralTokenAddress]
+                let borrowerAddressList = [borrowerAddressUrl, borrowerAddress]
+                let liquidationContractAddressList = [liquidationContractAddressUrl, liquidationContractAddress]
+                let plpAddressList = [plpAddressUrl, plpAddress]
+                let fContractAddressList = [fContractAddressUrl, fContractAddress]
+                let lendingTokenAddressList = [lendingTokenAddressUrl, lendingTokenAddress]
+                let collateralTokenAddressList = [collateralTokenAddressUrl, collateralTokenAddress]
 
-        //         let liquidatorPnlUSD = 0;
-        //         if (collateralValueUSD > lendingValueUSD) {
-        //             liquidatorPnlUSD = maxRepaymentValueUSD * (liquidatorRewardFactor - 1);
-        //         }
-        //         else {
-        //             liquidatorPnlUSD = collateralValueUSD - lendingValueUSD;
-        //         }
-        //         liquidatorPnlUSD = Math.round(liquidatorPnlUSD * 100) / 100;
+                let liquidatorPnlUSD = 0;
+                if (collateralValueUSD > lendingValueUSD) {
+                    liquidatorPnlUSD = maxRepaymentValueUSD * (liquidatorRewardFactor - 1);
+                }
+                else {
+                    liquidatorPnlUSD = collateralValueUSD - lendingValueUSD;
+                }
+                liquidatorPnlUSD = Math.round(liquidatorPnlUSD * 100) / 100;
 
-        //         let evaluationData = {
-        //             liquidatorPnlUSD, collateralSymbol, collateralPriceUSD, lendingSymbol, lendingPriceUSD, collateralValueUSD, lendingValueUSD, liquidatorRewardFactor, healthFactor, maxRepaymentValueUSD
-        //         };
-        //         let executionData = { borrowerAddressList, collateralTokenAddressList, lendingTokenAddressList, minRepaymentTokenCount, maxRepaymentTokenCount, fContractAddressList, plpAddressList, liquidationContractAddressList };
-        //         if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
-        //             sumOfLendingTokenValue += lendingValueUSD
-        //             countOfPositions += 1;
-        //             totalLiquidatorLosses += Math.min(0, liquidatorPnlUSD);
-        //             totalLiquidatorProfits += Math.max(0, liquidatorPnlUSD);
-        //             readableResult.push({ evaluationData, executionData });
-        //         }
-        //     })
-        // );
+                let evaluationData = {
+                    liquidatorPnlUSD, collateralSymbol, collateralPriceUSD, lendingSymbol, lendingPriceUSD, collateralValueUSD, lendingValueUSD, liquidatorRewardFactor, healthFactor, maxRepaymentValueUSD
+                };
+                let executionData = { borrowerAddressList, collateralTokenAddressList, lendingTokenAddressList, minRepaymentTokenCount, maxRepaymentTokenCount, fContractAddressList, plpAddressList, liquidationContractAddressList };
+                if (Math.abs(evaluationData.liquidatorPnlUSD) > Math.abs(minValue)) {
+                    sumOfLendingTokenValue += lendingValueUSD
+                    countOfPositions += 1;
+                    totalLiquidatorLosses += Math.min(0, liquidatorPnlUSD);
+                    totalLiquidatorProfits += Math.max(0, liquidatorPnlUSD);
+                    readableResult.push({ evaluationData, executionData });
+                }
+            })
+        );
     }
 
     // Wait for all promises to resolve
