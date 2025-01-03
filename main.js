@@ -32,16 +32,27 @@ async function makeOutputReadable(result, chainName, minValue) {
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
     let plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
     let explorerUrl = process.env[`${chainName.toUpperCase()}_EXPLORER_URL`];
-    for (let liquidatablePositionKey in result.liquidatablePositions) {
-        let liquidatablePosition = Object.values(result.liquidatablePositions[liquidatablePositionKey]);
-        console.log(`liquidatablePosition: ${liquidatablePosition}`);
-        let [borrowerAddress, collateralTokenAddress, collateralTokenValue, collateralTokenCount, lendingTokenAddress, lendingTokenOutstandingCount, lendingTokenOutstandingValue, healthFactor, minRepaymentTokenCount, maxRepaymentTokenCount, liquidatorRewardFactor, chainId] = liquidatablePosition;
+    for (let liquidatablePosition of result.liquidatablePositions) {
+        console.log(`liquidatablePosition:`, liquidatablePosition);
+        let {
+            borrowerAddress,
+            collateralToken,
+            lendingToken, 
+            totalOutstandingAmount,
+            healthFactor,
+            liquidatorRewardFactor,
+            chainId
+        } = liquidatablePosition;
+        let lendingTokenOutstandingCount = Number(totalOutstandingAmount);
+        
+        // TODO: Need to get from smart contract or subgraph
+        let collateralTokenValue, collateralTokenCount, lendingTokenOutstandingValue, minRepaymentTokenCount, maxRepaymentTokenCount;
 
-        let collateralDecimalsPromise = getTokenDecimals(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let lendingDecimalsPromise = getTokenDecimals(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let collateralSymbolPromise = getTokenSymbol(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let lendingSymbolPromise = getTokenSymbol(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let collateralDecimalsPromise = getTokenDecimals(collateralToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingDecimalsPromise = getTokenDecimals(lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let collateralSymbolPromise = getTokenSymbol(collateralToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingSymbolPromise = getTokenSymbol(lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
 
         // Collect all promises for concurrent execution
         promises.push(
@@ -69,15 +80,15 @@ async function makeOutputReadable(result, chainName, minValue) {
                 let liquidationContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", liquidationContractAddress);
                 let plpAddressUrl = await normalizeUrl(explorerUrl, "/address/", plpAddress);
                 let fContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", fContractAddress);
-                let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingTokenAddress);
-                let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralTokenAddress);
+                let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingToken.address);
+                let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralToken.address);
 
                 let borrowerAddressList = [borrowerAddressUrl, borrowerAddress]
                 let liquidationContractAddressList = [liquidationContractAddressUrl, liquidationContractAddress]
                 let plpAddressList = [plpAddressUrl, plpAddress]
                 let fContractAddressList = [fContractAddressUrl, fContractAddress]
-                let lendingTokenAddressList = [lendingTokenAddressUrl, lendingTokenAddress]
-                let collateralTokenAddressList = [collateralTokenAddressUrl, collateralTokenAddress]
+                let lendingTokenAddressList = [lendingTokenAddressUrl, lendingToken.address]
+                let collateralTokenAddressList = [collateralTokenAddressUrl, collateralToken.address]
 
                 let liquidatorPnlUSD = 0;
                 if (collateralValueUSD > lendingValueUSD) {
@@ -224,7 +235,7 @@ async function getTokenDecimals(tokenAddress, rpcUrl) {
     try {
         // Call the decimals function of the contract
         const decimals = await tokenContract.methods.decimals().call();
-        return decimals; // Return the number of decimals
+        return Number(decimals); // Return the number of decimals
     } catch (error) {
         console.error('An error occurred:', error);
         return null; // Return null in case of an error
