@@ -216,9 +216,9 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
-"@fringefinance/primary-scripts@^1.0.7":
-  version "1.0.10"
-  resolved "https://registry.npmjs.org/@fringefinance/primary-scripts/-/primary-scripts-1.0.10.tgz"
+"@fringefinance/primary-scripts@^1.0.8":
+  version "1.0.8"
+  resolved "https://registry.npmjs.org/@fringefinance/primary-scripts/-/primary-scripts-1.0.8.tgz"
   integrity sha512-jQ487aXUcj529f9V0rjUSf0yQAb4ecHae/H66XCO/dBogG7pzsKnJ3F5GsX9Q41k+72izNu1b8ZNKQdyTB1QrA==
   dependencies:
     "@pythnetwork/pyth-evm-js" "^1.29.2"

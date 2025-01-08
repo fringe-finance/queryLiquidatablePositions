@@ -32,27 +32,17 @@ async function makeOutputReadable(result, chainName, minValue) {
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
     let plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
     let explorerUrl = process.env[`${chainName.toUpperCase()}_EXPLORER_URL`];
-    for (let liquidatablePosition of result.liquidatablePositions) {
-        console.log(`liquidatablePosition:`, liquidatablePosition);
-        let {
-            borrowerAddress,
-            collateralToken,
-            lendingToken, 
-            totalOutstandingAmount,
-            healthFactor,
-            liquidatorRewardFactor,
-            chainId
-        } = liquidatablePosition;
-        let lendingTokenOutstandingCount = Number(totalOutstandingAmount);
-        
-        // TODO: Need to get from smart contract or subgraph
-        let collateralTokenValue, collateralTokenCount, lendingTokenOutstandingValue, minRepaymentTokenCount, maxRepaymentTokenCount;
 
-        let collateralDecimalsPromise = getTokenDecimals(collateralToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let lendingDecimalsPromise = getTokenDecimals(lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let collateralSymbolPromise = getTokenSymbol(collateralToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let lendingSymbolPromise = getTokenSymbol(lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
-        let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingToken.address, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+    for (let liquidatablePositionKey in result.liquidatablePositions) {
+        let liquidatablePosition = Object.values(result.liquidatablePositions[liquidatablePositionKey]);
+
+        let [borrowerAddress, collateralTokenAddress, collateralTokenValue, collateralTokenCount, lendingTokenAddress, lendingTokenOutstandingCount, lendingTokenOutstandingValue, healthFactor, minRepaymentTokenCount, maxRepaymentTokenCount, liquidatorRewardFactor, chainId] = liquidatablePosition;
+
+        let collateralDecimalsPromise = getTokenDecimals(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingDecimalsPromise = getTokenDecimals(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let collateralSymbolPromise = getTokenSymbol(collateralTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let lendingSymbolPromise = getTokenSymbol(lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
+        let fContractAddressPromise = getFLendingTokenAddress(plpAddress, lendingTokenAddress, process.env[`${chainName.toUpperCase()}_NETWORK_RPC`]);
 
         // Collect all promises for concurrent execution
         promises.push(
@@ -80,15 +70,15 @@ async function makeOutputReadable(result, chainName, minValue) {
                 let liquidationContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", liquidationContractAddress);
                 let plpAddressUrl = await normalizeUrl(explorerUrl, "/address/", plpAddress);
                 let fContractAddressUrl = await normalizeUrl(explorerUrl, "/address/", fContractAddress);
-                let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingToken.address);
-                let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralToken.address);
+                let lendingTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", lendingTokenAddress);
+                let collateralTokenAddressUrl = await normalizeUrl(explorerUrl, "/address/", collateralTokenAddress);
 
                 let borrowerAddressList = [borrowerAddressUrl, borrowerAddress]
                 let liquidationContractAddressList = [liquidationContractAddressUrl, liquidationContractAddress]
                 let plpAddressList = [plpAddressUrl, plpAddress]
                 let fContractAddressList = [fContractAddressUrl, fContractAddress]
-                let lendingTokenAddressList = [lendingTokenAddressUrl, lendingToken.address]
-                let collateralTokenAddressList = [collateralTokenAddressUrl, collateralToken.address]
+                let lendingTokenAddressList = [lendingTokenAddressUrl, lendingTokenAddress]
+                let collateralTokenAddressList = [collateralTokenAddressUrl, collateralTokenAddress]
 
                 let liquidatorPnlUSD = 0;
                 if (collateralValueUSD > lendingValueUSD) {
@@ -229,13 +219,12 @@ async function getTokenDecimals(tokenAddress, rpcUrl) {
     ];
 
     // Create a contract instance for the given token address
-    console.log(`getTokenDecimals: tokenAddress: ${tokenAddress}`);
     const tokenContract = new web3.eth.Contract(tokenAbi, tokenAddress);
 
     try {
         // Call the decimals function of the contract
         const decimals = await tokenContract.methods.decimals().call();
-        return Number(decimals); // Return the number of decimals
+        return decimals; // Return the number of decimals
     } catch (error) {
         console.error('An error occurred:', error);
         return null; // Return null in case of an error
@@ -246,15 +235,16 @@ async function getTokenDecimals(tokenAddress, rpcUrl) {
 // Define an async function to liquidate positions for a given chain
 async function liquidateForChain(chainName, minValue) {
     // Use environment variables specific to the chain
-    let rpcUrl = process.env[`${chainName.toUpperCase()}_NETWORK_RPC`];
-    let plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
-    let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
-    let subgraphUrl = process.env[`${chainName.toUpperCase()}_PLP_SUBGRAPH_URL`];
-    let priceAggregatorAddress = process.env[`${chainName.toUpperCase()}_PRICE_AGGREGATOR_CONTRACT_ADDRESS`];
-    let pythPriceProviderAddress = process.env[`${chainName.toUpperCase()}_PYTH_PRICE_PROVIDER_CONTRACT_ADDRESS`];
-    let timeBeforeExpiration = process.env[`${chainName.toUpperCase()}_TIME_BEFORE_EXPIRATION`];
-    let pythnetPriceFeedEndpoint = process.env[`${chainName.toUpperCase()}_PYTHNET_PRICE_FEED_ENDPOINT`];
+    rpcUrl = process.env[`${chainName.toUpperCase()}_NETWORK_RPC`];
+    plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
+    liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
+    subgraphUrl = process.env[`${chainName.toUpperCase()}_PLP_SUBGRAPH_URL`];
+    priceAggregatorAddress = process.env[`${chainName.toUpperCase()}_PRICE_AGGREGATOR_CONTRACT_ADDRESS`];
+    pythPriceProviderAddress = process.env[`${chainName.toUpperCase()}_PYTH_PRICE_PROVIDER_CONTRACT_ADDRESS`];
+    timeBeforeExpiration = process.env[`${chainName.toUpperCase()}_TIME_BEFORE_EXPIRATION`];
+    pythnetPriceFeedEndpoint = process.env[`${chainName.toUpperCase()}_PYTHNET_PRICE_FEED_ENDPOINT`];
 
+    console.log("Rpc url: ", rpcUrl, "plp address: ", plpAddress, "liquidation contract address: ", liquidationContractAddress, "subgraph url: ", subgraphUrl, "price aggregator address: ", priceAggregatorAddress, "pyth price provider address: ", pythPriceProviderAddress, "time before expiration: ", timeBeforeExpiration, "pythnet price feed endpoint: ", pythnetPriceFeedEndpoint);
     const liquidatePosition = new LiquidatePositions(rpcUrl, plpAddress, liquidationContractAddress, subgraphUrl, priceAggregatorAddress, pythPriceProviderAddress, timeBeforeExpiration, pythnetPriceFeedEndpoint);
 
     // Execute the liquidation process for the chain
@@ -269,6 +259,7 @@ async function processChains(chains, minValue) {
     const promises = chains.map(chain => liquidateForChain(chain, minValue).catch(console.error));
 
     const results = await Promise.all(promises);
+
     const sumOfLendingTokenValue = results.reduce((sum, result) => sum + result[0], 0);
     const countOfPositions = results.reduce((count, result) => count + result[1], 0);
     const totalLiquidatorLosses = results.reduce((sum, result) => sum + result[2], 0);
