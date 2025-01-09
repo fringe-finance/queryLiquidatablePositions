@@ -1,0 +1,18 @@
+{
+  "name": "@fringefinance/primary-scripts",
+  "version": "1.0.8",
+  "description": "Script to get liquidate positions",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Fringe Finance",
+  "license": "ISC",
+  "dependencies": {
+    "@fringefinance/primary-scripts": "file:",
+    "@pythnetwork/pyth-evm-js": "^1.29.2",
+    "axios": "^1.3.0",
+    "dotenv": "^16.0.3",
+    "web3": "^1.8.1"
+  }
+}

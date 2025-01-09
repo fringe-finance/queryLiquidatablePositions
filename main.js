@@ -1,4 +1,4 @@
-const LiquidatePositions = require('@fringefinance/primary-scripts');
+const LiquidatePositions = require('./@fringefinance/primary-scripts');
 const Web3 = require('web3');
 const path = require('path');
 const dotenv = require('dotenv');
