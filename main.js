@@ -32,7 +32,7 @@ async function makeOutputReadable(result, chainName, minValue) {
     let liquidationContractAddress = process.env[`${chainName.toUpperCase()}_PLP_LIQUIDATION_CONTRACT_ADDRESS`];
     let plpAddress = process.env[`${chainName.toUpperCase()}_PLP_CONTRACT_ADDRESS`];
     let explorerUrl = process.env[`${chainName.toUpperCase()}_EXPLORER_URL`];
-
+    console.log("liquidatablePositions: ", result.liquidatablePositions);
     for (let liquidatablePositionKey in result.liquidatablePositions) {
         let liquidatablePosition = Object.values(result.liquidatablePositions[liquidatablePositionKey]);
 
