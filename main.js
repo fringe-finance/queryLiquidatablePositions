@@ -206,17 +206,17 @@ async function processPosition(positionObject, chainName, minValue) {
 
     // Show the difference between dividing by 1e6 vs. dividing by (1e(6 + decimals))
     console.log('DEBUG: Compare dividing rawCollateralValue =>', {
-        dividingBy1e6: rawCollateralValue / 10 ** 6,
+        dividingBy1e10: rawCollateralValue / 10 ** 10,
         dividingBy1e6PlusDecimals: rawCollateralValue / 10 ** (6 + collateralDecimals)
     });
     console.log('DEBUG: Compare dividing rawLendingTokenValue =>', {
-        dividingBy1e6: rawLendingTokenValue / 10 ** 6,
+        dividingBy1e10: rawLendingTokenValue / 10 ** 10,
         dividingBy1e6PlusDecimals: rawLendingTokenValue / 10 ** (6 + lendingDecimals)
     });
 
     // Existing code
-    const collateralValueUSD = Math.round((rawCollateralValue / 10 ** 6) * 100) / 100;
-    const lendingValueUSD = Math.round((rawLendingTokenValue / 10 ** 6) * 100) / 100;
+    const collateralValueUSD = Math.round((rawCollateralValue / 10 ** 10) * 100) / 100;
+    const lendingValueUSD = Math.round((rawLendingTokenValue / 10 ** 10) * 100) / 100;
     console.log('DEBUG: Computed collateralValueUSD, lendingValueUSD =>', {
         collateralValueUSD,
         lendingValueUSD
