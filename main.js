@@ -163,19 +163,19 @@ async function processPosition(positionObject, chainName, minValue) {
     ] = Object.values(positionObject);
 
     // Debug to show the raw values
-    console.log('DEBUG: Raw position data =>', {
-        borrowerAddress,
-        collateralTokenAddress,
-        rawCollateralValue,
-        rawCollateralCount,
-        lendingTokenAddress,
-        rawLendingTokenCount,
-        rawLendingTokenValue,
-        rawHealthFactor,
-        rawMinRepayment,
-        rawMaxRepayment,
-        rawLiquidatorReward
-    });
+    // console.log('DEBUG: Raw position data =>', {
+    //     borrowerAddress,
+    //     collateralTokenAddress,
+    //     rawCollateralValue,
+    //     rawCollateralCount,
+    //     lendingTokenAddress,
+    //     rawLendingTokenCount,
+    //     rawLendingTokenValue,
+    //     rawHealthFactor,
+    //     rawMinRepayment,
+    //     rawMaxRepayment,
+    //     rawLiquidatorReward
+    // });
 
     if (!collateralTokenAddress || !lendingTokenAddress) {
         return null;
@@ -183,7 +183,7 @@ async function processPosition(positionObject, chainName, minValue) {
 
     const collateralDecimals = await getTokenDecimals(collateralTokenAddress, rpcUrl);
     const lendingDecimals = await getTokenDecimals(lendingTokenAddress, rpcUrl);
-    console.log('DEBUG: Decimals =>', { collateralDecimals, lendingDecimals });
+    // console.log('DEBUG: Decimals =>', { collateralDecimals, lendingDecimals });
 
     if (!collateralDecimals || !lendingDecimals) {
         return null;
@@ -193,43 +193,43 @@ async function processPosition(positionObject, chainName, minValue) {
     const lendingSymbol = await getTokenSymbol(lendingTokenAddress, rpcUrl);
     const fContractAddress = await getFLendingTokenAddress(plpAddress, lendingTokenAddress, rpcUrl);
 
-    // Debug to show collateral/lending counts in token units
-    console.log('DEBUG: Token counts =>', {
-        rawCollateralCount,
-        rawLendingTokenCount,
-        collateralDecimals,
-        lendingDecimals
-    });
+    // // Debug to show collateral/lending counts in token units
+    // console.log('DEBUG: Token counts =>', {
+    //     rawCollateralCount,
+    //     rawLendingTokenCount,
+    //     collateralDecimals,
+    //     lendingDecimals
+    // });
 
     const collateralCount = rawCollateralCount / 10 ** collateralDecimals;
     const lendingCount = rawLendingTokenCount / 10 ** lendingDecimals;
 
     // Show the difference between dividing by 1e6 vs. dividing by (1e(6 + decimals))
-    console.log('DEBUG: Compare dividing rawCollateralValue =>', {
-        dividingBy1e10: rawCollateralValue / 10 ** 10,
-        dividingBy1e6PlusDecimals: rawCollateralValue / 10 ** (6 + collateralDecimals)
-    });
-    console.log('DEBUG: Compare dividing rawLendingTokenValue =>', {
-        dividingBy1e10: rawLendingTokenValue / 10 ** 10,
-        dividingBy1e6PlusDecimals: rawLendingTokenValue / 10 ** (6 + lendingDecimals)
-    });
+    // console.log('DEBUG: Compare dividing rawCollateralValue =>', {
+    //     dividingBy1e10: rawCollateralValue / 10 ** 10,
+    //     dividingBy1e6PlusDecimals: rawCollateralValue / 10 ** (6 + collateralDecimals)
+    // });
+    // console.log('DEBUG: Compare dividing rawLendingTokenValue =>', {
+    //     dividingBy1e10: rawLendingTokenValue / 10 ** 10,
+    //     dividingBy1e6PlusDecimals: rawLendingTokenValue / 10 ** (6 + lendingDecimals)
+    // });
 
     // Existing code
     const collateralValueUSD = Math.round((rawCollateralValue / 10 ** 10) * 100) / 100;
     const lendingValueUSD = Math.round((rawLendingTokenValue / 10 ** 10) * 100) / 100;
-    console.log('DEBUG: Computed collateralValueUSD, lendingValueUSD =>', {
-        collateralValueUSD,
-        lendingValueUSD
-    });
+    // console.log('DEBUG: Computed collateralValueUSD, lendingValueUSD =>', {
+    //     collateralValueUSD,
+    //     lendingValueUSD
+    // });
 
     // Derived prices
     const collateralPriceUSD = Math.round(((collateralValueUSD / collateralCount) || 0) * 100) / 100;
     const lendingPriceUSD = Math.round(((lendingValueUSD / lendingCount) || 0) * 100) / 100;
 
-    console.log('DEBUG: Derived collateralPriceUSD, lendingPriceUSD =>', {
-        collateralPriceUSD,
-        lendingPriceUSD
-    });
+    // console.log('DEBUG: Derived collateralPriceUSD, lendingPriceUSD =>', {
+    //     collateralPriceUSD,
+    //     lendingPriceUSD
+    // });
 
     const minRepaymentTokenCount = rawMinRepayment / 10 ** lendingDecimals;
     const maxRepaymentTokenCount = rawMaxRepayment / 10 ** lendingDecimals;
@@ -246,10 +246,10 @@ async function processPosition(positionObject, chainName, minValue) {
     }
     liquidatorPnlUSD = Math.round(liquidatorPnlUSD * 100) / 100;
 
-    console.log('DEBUG: Computed liquidation stats =>', {
-        maxRepaymentValueUSD,
-        liquidatorPnlUSD
-    });
+    // console.log('DEBUG: Computed liquidation stats =>', {
+    //     maxRepaymentValueUSD,
+    //     liquidatorPnlUSD
+    // });
 
     if (Math.abs(liquidatorPnlUSD) <= Math.abs(minValue)) {
         return null;
