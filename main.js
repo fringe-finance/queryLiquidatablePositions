@@ -390,7 +390,7 @@ async function processChains(chains, minValue) {
     const totalProfits = allResults.reduce((acc, r) => acc + (r[3] || 0), 0);
 
     console.log(
-        '\nTotal lending value: US$',
+        '\nTotal borrowed value: US$',
         Math.round(sumOfValues),
         '\nPosition count:',
         countOfPositions,
